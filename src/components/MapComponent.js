@@ -9,23 +9,16 @@ import Radio from '@material-ui/core/Radio';
 import FormGroup from '@material-ui/core/FormGroup';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Button from '@material-ui/core/Button';
-import Select from 'react-select';
-import NoSsr from '@material-ui/core/NoSsr';
-import { emphasize } from '@material-ui/core/styles/colorManipulator';
-
+import Paper from '@material-ui/core/Paper';
+import TextField from '@material-ui/core/TextField';
+import MenuItem from '@material-ui/core/MenuItem';
+import Downshift from 'downshift';
+import deburr from 'lodash/deburr';
+import _ from 'lodash';
 import L from 'leaflet';
 
 import Main from '../hoc/Main';
 import suggestions from '../city.list.json';
-import { 
-    Control,
-    Menu,
-    NoOptionsMessage,
-    Option,
-    Placeholder,
-    SingleValue,
-    ValueContainer,
-} from './SelectComponents'
 
 const styles = theme => ({
     container: {
@@ -48,45 +41,17 @@ const styles = theme => ({
     },
     root: {
         flexGrow: 1,
-        height: 250,
     },
-    input: {
-      display: 'flex',
-      padding: 0,
+    donwshiftContainer: {
+        flexGrow: 1,
+        position: 'relative',
     },
-    valueContainer: {
-      display: 'flex',
-      flexWrap: 'wrap',
-      flex: 1,
-      alignItems: 'center',
-      overflow: 'hidden',
+    inputRoot: {
+        flexWrap: 'wrap',
     },
-    chip: {
-      margin: `${theme.spacing.unit / 2}px ${theme.spacing.unit / 4}px`,
-    },
-    chipFocused: {
-      backgroundColor: emphasize(
-        theme.palette.type === 'light' ? theme.palette.grey[300] : theme.palette.grey[700],
-        0.08,
-      ),
-    },
-    noOptionsMessage: {
-      padding: `${theme.spacing.unit}px ${theme.spacing.unit * 2}px`,
-    },
-    singleValue: {
-      fontSize: 16,
-    },
-    placeholder: {
-      position: 'absolute',
-      left: 2,
-      fontSize: 16,
-    },
-    paper: {
-      position: 'absolute',
-      zIndex: 1,
-      marginTop: theme.spacing.unit,
-      left: 0,
-      right: 0,
+    inputInput: {
+        width: 'auto',
+        flexGrow: 1,
     },
 });
 
@@ -101,16 +66,6 @@ const markerOptions = {
     draggable: true
 };
 
-const components = {
-    Control,
-    Menu,
-    NoOptionsMessage,
-    Option,
-    Placeholder,
-    SingleValue,
-    ValueContainer,
-};
-
 export class MapComponent extends Component {
 
     constructor(props) {
@@ -119,7 +74,10 @@ export class MapComponent extends Component {
         this.handleSubmit = this.handleSubmit.bind(this);
         this.handleChange = this.handleChange.bind(this);
         this.handleChangeRadio = this.handleChangeRadio.bind(this);
-        this.handleChangeSelect = this.handleChangeSelect.bind(this);
+        this.getSuggestions = this.getSuggestions.bind(this);
+        this.renderInput = this.renderInput.bind(this);
+        this.renderSuggestion = this.renderSuggestion.bind(this);
+        this.handleChangeDownShift = this.handleChangeDownShift.bind(this);
 
         this.state = {
             lat: 10.48801,
@@ -166,33 +124,87 @@ export class MapComponent extends Component {
         });
     }
 
+    handleChangeDownShift = event => {
+        if(event) {
+            const city = event.split('-');
+            const result = _.head(_.filter(suggestions, (suggestion) => 
+                (suggestion.name === city[0].trim() && suggestion.country === city[1].trim())));
+            if(result) {
+                this.setState({ name: result.name, id: result.code });
+            }
+        }
+        
+    }
+
     handleChangeRadio = event => {
         this.setState({ findBy: event.target.value });
-    };
-
-    handleChangeSelect = name => value => {
-        this.setState({
-          [name]: value,
-        });
     };
 
     handleSubmit = event => {
         event.preventDefault();
         const { lat, lng, name } = this.state;
     }
+
+    getSuggestions(value) {
+        const inputValue = deburr(value.trim()).toLowerCase();
+        const inputLength = inputValue.length;
+        let count = 0;
+      
+        return inputLength === 0
+          ? []
+          : suggestions.filter(suggestion => {
+              const keep =
+                count < 5 && suggestion.name.slice(0, inputLength).toLowerCase() === inputValue;
+      
+              if (keep) {
+                count += 1;
+              }
+      
+              return keep;
+            });
+    }
+
+    renderInput(inputProps) {
+        const { InputProps, classes, ref, ...other } = inputProps;
+      
+        return (
+          <TextField
+            label="City Name"
+            InputProps={{
+              inputRef: ref,
+              classes: {
+                root: classes.inputRoot,
+                input: classes.inputInput,
+              },
+              ...InputProps,
+            }}
+            {...other}
+          />
+        );
+    }
+
+    renderSuggestion({ suggestion, index, itemProps, highlightedIndex, selectedItem }) {
+        const isHighlighted = highlightedIndex === index;
+        const isSelected = (selectedItem || '').indexOf(suggestion.name) > -1;
+      
+        return (
+          <MenuItem
+            {...itemProps}
+            key={suggestion.code}
+            selected={isHighlighted}
+            component="div"
+            style={{
+              fontWeight: isSelected ? 500 : 400,
+            }}
+          >
+            {`${suggestion.name} - ${suggestion.country}`}
+          </MenuItem>
+        );
+    }
   
     render() {
-        const { classes, theme } = this.props;
+        const { classes } = this.props;
         const { lat, lng, findBy } = this.state;
-        const selectStyles = {
-            input: base => ({
-              ...base,
-              color: theme.palette.text.primary,
-              '& input': {
-                font: 'inherit',
-              },
-            }),
-        };
 
         return (
             <Main style={{flexGrow: 1}}>
@@ -223,19 +235,54 @@ export class MapComponent extends Component {
                                     />
                                 </FormControl>
                                 <FormControl fullWidth className={classes.margin}>
-                                    <NoSsr>
-                                        <Select
-                                            classes={classes}
-                                            styles={selectStyles}
-                                            options={suggestions}
-                                            components={components}
-                                            value={this.state.single}
-                                            onChange={this.handleChangeSelect('name')}
-                                            placeholder="Type a city name"
-                                            isClearable
-                                            isSearchable
-                                        />
-                                    </NoSsr>
+                                    
+                                    <div className={classes.root}>
+                                        <Downshift 
+                                            id="downshift-simple"
+                                            onChange={this.handleChangeDownShift}
+                                        >
+                                            {({
+                                                getInputProps,
+                                                getItemProps,
+                                                getMenuProps,
+                                                highlightedIndex,
+                                                inputValue,
+                                                isOpen,
+                                                selectedItem,
+                                            }) => (
+                                            <div className={classes.donwshiftContainer}>
+                                                {
+                                                    this.renderInput({
+                                                        fullWidth: true,
+                                                        classes,
+                                                        InputProps: getInputProps({
+                                                            placeholder: 'Type a city name'
+                                                        }),
+                                                    })
+                                                }
+                                                <div {...getMenuProps()}>
+                                                {
+                                                    isOpen ? (
+                                                        <Paper className={classes.paper} square>
+                                                        {
+                                                            this.getSuggestions(inputValue).map((suggestion, index) =>
+                                                                this.renderSuggestion({
+                                                                    suggestion,
+                                                                    index,
+                                                                    itemProps: getItemProps({ item: `${suggestion.name} - ${suggestion.country}` }),
+                                                                    highlightedIndex,
+                                                                    selectedItem,
+                                                                }),
+                                                            )
+                                                        }
+                                                        </Paper>
+                                                    ) : null
+                                                }
+                                                </div>
+                                            </div>
+                                            )}
+                                        </Downshift>
+                                    </div>
                                 </FormControl>
                                 <FormGroup row>
                                     <FormControlLabel
@@ -284,4 +331,4 @@ export class MapComponent extends Component {
     }
 }
 
-export default withStyles(styles, { withTheme: true })(MapComponent);
+export default withStyles(styles)(MapComponent);
