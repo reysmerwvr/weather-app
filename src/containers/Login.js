@@ -118,13 +118,13 @@ class Login extends Component {
         }
     }
 
-    handleChange(event) {
+    handleChange = event => {
         this.setState({
           [event.target.name]: event.target.value,
         });
     }
 
-    handleSubmit(event) {
+    handleSubmit = event => {
         event.preventDefault();
         const { email, password } = this.state;
         if(email && password) {

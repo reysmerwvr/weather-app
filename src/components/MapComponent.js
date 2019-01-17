@@ -5,9 +5,27 @@ import Typography from '@material-ui/core/Typography';
 import FormControl from '@material-ui/core/FormControl';
 import Input from '@material-ui/core/Input';
 import InputLabel from '@material-ui/core/InputLabel';
+import Radio from '@material-ui/core/Radio';
+import FormGroup from '@material-ui/core/FormGroup';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import Button from '@material-ui/core/Button';
+import Select from 'react-select';
+import NoSsr from '@material-ui/core/NoSsr';
+import { emphasize } from '@material-ui/core/styles/colorManipulator';
+
 import L from 'leaflet';
 
 import Main from '../hoc/Main';
+import suggestions from '../city.list.json';
+import { 
+    Control,
+    Menu,
+    NoOptionsMessage,
+    Option,
+    Placeholder,
+    SingleValue,
+    ValueContainer,
+} from './SelectComponents'
 
 const styles = theme => ({
     container: {
@@ -25,6 +43,51 @@ const styles = theme => ({
     menu: {
       width: 200,
     },
+    button: {
+        margin: theme.spacing.unit,
+    },
+    root: {
+        flexGrow: 1,
+        height: 250,
+    },
+    input: {
+      display: 'flex',
+      padding: 0,
+    },
+    valueContainer: {
+      display: 'flex',
+      flexWrap: 'wrap',
+      flex: 1,
+      alignItems: 'center',
+      overflow: 'hidden',
+    },
+    chip: {
+      margin: `${theme.spacing.unit / 2}px ${theme.spacing.unit / 4}px`,
+    },
+    chipFocused: {
+      backgroundColor: emphasize(
+        theme.palette.type === 'light' ? theme.palette.grey[300] : theme.palette.grey[700],
+        0.08,
+      ),
+    },
+    noOptionsMessage: {
+      padding: `${theme.spacing.unit}px ${theme.spacing.unit * 2}px`,
+    },
+    singleValue: {
+      fontSize: 16,
+    },
+    placeholder: {
+      position: 'absolute',
+      left: 2,
+      fontSize: 16,
+    },
+    paper: {
+      position: 'absolute',
+      zIndex: 1,
+      marginTop: theme.spacing.unit,
+      left: 0,
+      right: 0,
+    },
 });
 
 const mapStyles = {
@@ -38,11 +101,34 @@ const markerOptions = {
     draggable: true
 };
 
+const components = {
+    Control,
+    Menu,
+    NoOptionsMessage,
+    Option,
+    Placeholder,
+    SingleValue,
+    ValueContainer,
+};
+
 export class MapComponent extends Component {
-    state = {
-        lat: 10.48801,
-        lng: -66.879189,
-        zoom: 5,
+
+    constructor(props) {
+        super(props);
+
+        this.handleSubmit = this.handleSubmit.bind(this);
+        this.handleChange = this.handleChange.bind(this);
+        this.handleChangeRadio = this.handleChangeRadio.bind(this);
+        this.handleChangeSelect = this.handleChangeSelect.bind(this);
+
+        this.state = {
+            lat: 10.48801,
+            lng: -66.879189,
+            zoom: 5,
+            name: '',
+            id: null,
+            findBy: 'coordinates'
+        };
     }
 
     componentDidMount() {
@@ -74,19 +160,49 @@ export class MapComponent extends Component {
 		});
     }
 
+    handleChange = event => {
+        this.setState({
+          [event.target.name]: event.target.value,
+        });
+    }
+
+    handleChangeRadio = event => {
+        this.setState({ findBy: event.target.value });
+    };
+
+    handleChangeSelect = name => value => {
+        this.setState({
+          [name]: value,
+        });
+    };
+
+    handleSubmit = event => {
+        event.preventDefault();
+        const { lat, lng, name } = this.state;
+    }
+  
     render() {
-        const { classes } = this.props;
-        const { lat, lng } = this.state;
+        const { classes, theme } = this.props;
+        const { lat, lng, findBy } = this.state;
+        const selectStyles = {
+            input: base => ({
+              ...base,
+              color: theme.palette.text.primary,
+              '& input': {
+                font: 'inherit',
+              },
+            }),
+        };
 
         return (
             <Main style={{flexGrow: 1}}>
                 <div style={{flexGrow: 1}}>
                     <Grid container spacing={24}>
                         <Grid item xs={8}>
-                            <Typography variant="h4" gutterBottom component="h2">
-                                Drag the marker to choose a location
+                            <div id="map" style={mapStyles}></div>
+                            <Typography variant="h6" gutterBottom component="h2">
+                                Drag the marker to choose a location or type a city name
                             </Typography>
-                            <div id="map" style={mapStyles}></div> 
                         </Grid>
                         <Grid item xs={4}>
                             <form className={classes.container} noValidate autoComplete="off">
@@ -94,7 +210,7 @@ export class MapComponent extends Component {
                                     <InputLabel htmlFor="latitude">Latitude</InputLabel>
                                     <Input
                                         id="latitude"
-                                        value={lng}
+                                        value={lat}
                                         readOnly
                                     />
                                 </FormControl>
@@ -106,6 +222,59 @@ export class MapComponent extends Component {
                                         readOnly
                                     />
                                 </FormControl>
+                                <FormControl fullWidth className={classes.margin}>
+                                    <NoSsr>
+                                        <Select
+                                            classes={classes}
+                                            styles={selectStyles}
+                                            options={suggestions}
+                                            components={components}
+                                            value={this.state.single}
+                                            onChange={this.handleChangeSelect('name')}
+                                            placeholder="Type a city name"
+                                            isClearable
+                                            isSearchable
+                                        />
+                                    </NoSsr>
+                                </FormControl>
+                                <FormGroup row>
+                                    <FormControlLabel
+                                        control={
+                                            <Radio
+                                                checked={findBy === 'coordinates'}
+                                                onChange={this.handleChangeRadio}
+                                                value="coordinates"
+                                                name="radio-button-find-by"
+                                                aria-label="Coordinates"
+                                                color="primary"
+                                            />
+                                        }
+                                        label="Coordinates"
+                                    />
+                                    <FormControlLabel
+                                        control={
+                                            <Radio
+                                                checked={findBy === 'name'}
+                                                onChange={this.handleChangeRadio}
+                                                value="name"
+                                                name="radio-button-find-by"
+                                                aria-label="Name"
+                                                color="secondary"
+                                            />
+                                        }
+                                        label="Name"
+                                    />
+                                </FormGroup>
+                                <Button
+                                    type="submit"
+                                    fullWidth
+                                    variant="contained"
+                                    color="primary"
+                                    className={classes.button}
+                                    onClick={this.handleSubmit}
+                                >
+                                    Load Data
+                                </Button>
                             </form>
                         </Grid>
                     </Grid>
@@ -115,4 +284,4 @@ export class MapComponent extends Component {
     }
 }
 
-export default withStyles(styles)(MapComponent);
+export default withStyles(styles, { withTheme: true })(MapComponent);
