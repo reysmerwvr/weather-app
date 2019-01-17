@@ -1,8 +1,15 @@
 import React, { Component } from 'react';
 
+import Main from '../hoc/Main';
+import MapComponent from '../components/MapComponent';
+
 class Forecasts extends Component {
     render() {
-        return 'Forecasts';
+        return (
+            <Main>
+                <MapComponent />
+            </Main>
+        );
     }
 }
 

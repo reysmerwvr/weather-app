@@ -75,6 +75,18 @@ class App extends Component {
               component={Dashboard}
               isAuthenticated={isAuthenticated} 
             />
+            <PrivateRoute
+              exact 
+              path="/temperatures" 
+              component={Dashboard}
+              isAuthenticated={isAuthenticated} 
+            />
+            <PrivateRoute
+              exact 
+              path="/precipitations" 
+              component={Dashboard}
+              isAuthenticated={isAuthenticated} 
+            />
           </Switch>
         </Router>
       </Provider>

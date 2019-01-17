@@ -86,6 +86,7 @@ const styles = theme => ({
       padding: theme.spacing.unit * 3,
       height: '100vh',
       overflow: 'auto',
+      marginTop: 50
     },
     chartContainer: {
       marginLeft: -22,
@@ -101,8 +102,33 @@ const styles = theme => ({
 class Dashboard extends Component {
   state = {
     open: true,
-    component: Forecasts
+    ContentComponent: Forecasts
   };
+
+  static getDerivedStateFromProps(nextProps, prevState) {
+    const { match } = nextProps
+    if(match !== prevState.match) {
+      let ContentComponent = prevState.component;
+      const path = match.path;
+      if(path) {
+        switch(path) {
+          case '/dashboard':
+            ContentComponent = Forecasts;
+            break;
+          case '/temperatures':
+            ContentComponent = Temperatures;
+            break;
+          case '/precipitations':
+            ContentComponent = Precipitations;
+            break;
+          default:
+            ContentComponent = Forecasts;
+        }
+      }
+      return { ContentComponent, match }
+    }
+    return null;
+  }
 
   handleDrawerOpen = () => {
     this.setState({ open: true });
@@ -114,6 +140,7 @@ class Dashboard extends Component {
   
   render() {
     const { classes } = this.props;
+    const { ContentComponent } = this.state;
     return (
       <Main>
         <div className={classes.root}>
@@ -160,12 +187,7 @@ class Dashboard extends Component {
             <List>{menuItems(this.props)}</List>
           </Drawer>
           <main className={classes.content}>
-            <div className={classes.appBarSpacer} />
-            <Typography variant="h4" gutterBottom component="h2">
-              Load Data
-            </Typography>
-            <Typography component="div" className={classes.chartContainer}>
-            </Typography>
+            <ContentComponent />
           </main>
         </div>
       </Main>

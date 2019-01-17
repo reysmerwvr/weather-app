@@ -94,9 +94,20 @@ class Login extends Component {
         };
     }
 
-    componentWillReceiveProps(nextProps) {
-        if (nextProps.error != null) {
-            toast.error(nextProps.error, {
+    static getDerivedStateFromProps(nextProps, prevState) {
+        const { error } = nextProps;
+        if (error !== prevState.error) {
+            return { error };
+        }
+        return null;
+    }
+
+    componentDidUpdate(prevProps) {
+        const { error } = prevProps;
+        const errorMessage = this.props.error;
+        if(error !== errorMessage) {
+          this.setState({ error : errorMessage });
+          toast.error(errorMessage, {
                 position: "top-right",
                 autoClose: 5000,
                 hideProgressBar: false,
