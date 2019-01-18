@@ -12,6 +12,7 @@ import IconButton from '@material-ui/core/IconButton';
 import MenuIcon from '@material-ui/icons/Menu';
 import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
 
+import history from '../helpers/history';
 import { menuItems } from '../components/MenuItems';
 import Main from '../hoc/Main';
 import { signOut } from '../actions';
@@ -104,6 +105,12 @@ class Dashboard extends Component {
     open: true,
     ContentComponent: Forecasts
   };
+
+  componentDidMount() {
+    if(!this.props.user) {
+      history.push('/dashboard');
+    }
+  }
 
   static getDerivedStateFromProps(nextProps, prevState) {
     const { match } = nextProps

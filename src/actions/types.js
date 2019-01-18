@@ -5,3 +5,4 @@ export const UNAUTH_USER = 'unauth_user';
 export const LOAD_FORECAST = 'load_forecast';
 export const LOAD_FORECAST_SUCCESS = 'load_forecast_success';
 export const LOAD_FORECAST_ERROR = 'load_forecast_error';
+export const CLEAR_MESSAGES = 'clear_messages';

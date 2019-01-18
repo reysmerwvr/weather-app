@@ -106,7 +106,6 @@ class Login extends Component {
         const { error } = prevProps;
         const errorMessage = this.props.error;
         if(error !== errorMessage) {
-          this.setState({ error : errorMessage });
           toast.error(errorMessage, {
                 position: "top-right",
                 autoClose: 5000,

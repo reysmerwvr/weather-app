@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { connect } from 'react-redux';
 import Grid from '@material-ui/core/Grid';
 import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
@@ -12,13 +13,16 @@ import Button from '@material-ui/core/Button';
 import Paper from '@material-ui/core/Paper';
 import TextField from '@material-ui/core/TextField';
 import MenuItem from '@material-ui/core/MenuItem';
+import { ToastContainer, toast } from 'react-toastify';
 import Downshift from 'downshift';
 import deburr from 'lodash/deburr';
 import _ from 'lodash';
 import L from 'leaflet';
 
 import Main from '../hoc/Main';
+import LoaderModal from '../components/LoaderModal';
 import suggestions from '../city.list.json';
+import { loadForecast, clearMessages } from '../actions';
 
 const styles = theme => ({
     container: {
@@ -72,24 +76,70 @@ export class MapComponent extends Component {
         super(props);
 
         this.handleSubmit = this.handleSubmit.bind(this);
-        this.handleChange = this.handleChange.bind(this);
         this.handleChangeRadio = this.handleChangeRadio.bind(this);
         this.getSuggestions = this.getSuggestions.bind(this);
         this.renderInput = this.renderInput.bind(this);
         this.renderSuggestion = this.renderSuggestion.bind(this);
         this.handleChangeDownShift = this.handleChangeDownShift.bind(this);
+        this.initMap = this.initMap.bind(this);
 
         this.state = {
-            lat: 10.48801,
-            lng: -66.879189,
+            lat: 59.436958,
+            lng: 24.753531,
             zoom: 5,
             name: '',
             id: null,
-            findBy: 'coordinates'
+            findBy: 'coordinates',
+            formError: 'You must to type a city name'
         };
     }
 
     componentDidMount() {
+        this.initMap();
+    }
+    
+    static getDerivedStateFromProps(nextProps, prevState) {
+        const { error, success } = nextProps;
+        if (error !== prevState.error) {
+            return { error };
+        }
+        if (success !== prevState.success) {
+            return { success };
+        }
+        return null;
+    }
+
+    componentDidUpdate(prevProps) {
+        const { error, success, clearMessages } = prevProps;
+        const errorMessage = this.props.error;
+        const successMessage = this.props.success;
+        if (error !== errorMessage && errorMessage !== null) {
+            toast.error(errorMessage, {
+                position: "top-right",
+                autoClose: 5000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true
+            });
+            this.initMap();
+            clearMessages();
+        }
+        if (success !== successMessage && successMessage !== null) {
+            toast.success(successMessage, {
+                position: "top-right",
+                autoClose: 5000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true
+            });
+            this.initMap();
+            clearMessages();
+        }
+    }
+
+    initMap() {
         const { lat, lng, zoom } = this.state;
         const position = [lat, lng]
         this.map = L.map('map', {
@@ -107,21 +157,15 @@ export class MapComponent extends Component {
 			const lat = coord[0].split('(');
 			const lng = coord[1].split(')');
             this.marker.bindPopup("Latitude: " + lat[1] + " Longitude" + lng[0] + ".");
-            this.setState({ lat: lat[1], lng: lng[0] });
+            this.setState({ lat: lat[1].trim(), lng: lng[0].trim() });
 		});
         this.map.on('click', (e) => {
             const coord = e.latlng.toString().split(',');
 		    const lat = coord[0].split('(');
 		    const lng = coord[1].split(')');
             this.marker.setLatLng(e.latlng);
-            this.setState({ lat: lat[1], lng: lng[0] });
+            this.setState({ lat: lat[1].trim(), lng: lng[0].trim() });
 		});
-    }
-
-    handleChange = event => {
-        this.setState({
-          [event.target.name]: event.target.value,
-        });
     }
 
     handleChangeDownShift = event => {
@@ -142,7 +186,20 @@ export class MapComponent extends Component {
 
     handleSubmit = event => {
         event.preventDefault();
-        const { lat, lng, name } = this.state;
+        const { findBy, name, formError } = this.state;
+        if(findBy === 'city_name' && name === '') {
+            toast.warn(formError, {
+                position: "top-right",
+                autoClose: 5000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true
+            });
+        } else {
+            this.props.loadForecast({ ...this.state });
+        }
+        
     }
 
     getSuggestions(value) {
@@ -203,12 +260,27 @@ export class MapComponent extends Component {
     }
   
     render() {
-        const { classes } = this.props;
+        const { classes, loading } = this.props;
         const { lat, lng, findBy } = this.state;
+
+        if (loading) {
+            return (<LoaderModal loading={loading} />);
+        }
 
         return (
             <Main style={{flexGrow: 1}}>
                 <div style={{flexGrow: 1}}>
+                    <ToastContainer
+                        position="top-right"
+                        autoClose={5000}
+                        hideProgressBar={false}
+                        newestOnTop={false}
+                        closeOnClick
+                        rtl={false}
+                        pauseOnVisibilityChange
+                        draggable
+                        pauseOnHover
+                    />
                     <Grid container spacing={24}>
                         <Grid item xs={8}>
                             <div id="map" style={mapStyles}></div>
@@ -234,7 +306,10 @@ export class MapComponent extends Component {
                                         readOnly
                                     />
                                 </FormControl>
-                                <FormControl fullWidth className={classes.margin}>
+                                <FormControl 
+                                    fullWidth 
+                                    className={classes.margin}
+                                >
                                     
                                     <div className={classes.root}>
                                         <Downshift 
@@ -301,9 +376,9 @@ export class MapComponent extends Component {
                                     <FormControlLabel
                                         control={
                                             <Radio
-                                                checked={findBy === 'name'}
+                                                checked={findBy === 'city_name'}
                                                 onChange={this.handleChangeRadio}
-                                                value="name"
+                                                value="city_name"
                                                 name="radio-button-find-by"
                                                 aria-label="Name"
                                                 color="secondary"
@@ -331,4 +406,15 @@ export class MapComponent extends Component {
     }
 }
 
-export default withStyles(styles)(MapComponent);
+const mapStateToProps = ({ forecasts }) => {
+    const { error, success, loading, forecast } = forecasts;
+
+    return { error, success, loading, forecast };
+};
+
+const mapDispatchToProps = { 
+    loadForecast,
+    clearMessages
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(withStyles(styles)(MapComponent));

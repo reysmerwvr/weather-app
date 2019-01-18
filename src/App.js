@@ -99,7 +99,7 @@ function PrivateRoute({ component: Component, isAuthenticated, ...rest }) {
     <Route
       {...rest}
       render={props =>
-        isAuthenticated ? (
+        (isAuthenticated || localStorage.getItem('token')) ? (
           <Component {...props} />
         ) : (
           <Redirect

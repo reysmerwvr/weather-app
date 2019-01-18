@@ -7,6 +7,7 @@ import {
     LOAD_FORECAST,
     LOAD_FORECAST_SUCCESS,
     LOAD_FORECAST_ERROR,
+    CLEAR_MESSAGES
 } from './types';
 
 const envVars = {
@@ -26,16 +27,17 @@ export function loadForecast({ lat, lng, name, id, findBy }) {
             data: {
                 city_name: name,
                 city_id: id,
-                coordinates: { latitude: lat, longitude: lng },
+                coordinates: { lat, lon: lng },
                 find_by: findBy
             },
             headers: {
                 'Content-Type': envVars.REACT_APP_CONTENT_TYPE_HEADER,
-                Accept: envVars.REACT_APP_ACCEPT_HEADER
+                Accept: envVars.REACT_APP_ACCEPT_HEADER,
+                Authorization: localStorage.getItem('token')
             }
         }).then((response) => {
-            const forecastResponse = response.data.data;
-            dispatch(retrieveActionCreator(LOAD_FORECAST_SUCCESS, forecastResponse));
+            const jsonResponse = response.data;
+            dispatch(retrieveActionCreator(LOAD_FORECAST_SUCCESS, jsonResponse));
         }).catch((error) => {
             handleError(error);
             if (error !== undefined) {
@@ -47,4 +49,10 @@ export function loadForecast({ lat, lng, name, id, findBy }) {
             dispatch(retrieveActionCreator(LOAD_FORECAST_ERROR, errorMessage));
         });
     };
+}
+
+export function clearMessages() {
+    return function (dispatch) {
+        dispatch(retrieveActionCreator(CLEAR_MESSAGES, null));
+    }
 }
