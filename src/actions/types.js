@@ -1,0 +1,14 @@
+export const AUTH_USER = 'auth_user';
+export const AUTH_USER_SUCCESS = 'auth_user_success';
+export const AUTH_USER_ERROR = 'auth_user_error';
+export const UNAUTH_USER = 'unauth_user';
+export const LOAD_FORECAST = 'load_forecast';
+export const LOAD_FORECAST_SUCCESS = 'load_forecast_success';
+export const LOAD_FORECAST_ERROR = 'load_forecast_error';
+export const GET_TEMPERATURES = 'get_temperatures';
+export const GET_TEMPERATURES_SUCCESS = 'get_temperatures_success';
+export const GET_TEMPERATURES_ERROR = 'get_temperatures_error';
+export const GET_PRECIPITATIONS = 'get_precipitations';
+export const GET_PRECIPITATIONS_SUCCESS = 'get_precipitations_success';
+export const GET_PRECIPITATIONS_ERROR = 'get_precipitations_error';
+export const CLEAR_MESSAGES = 'clear_messages';
