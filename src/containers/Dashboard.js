@@ -108,12 +108,12 @@ class Dashboard extends Component {
 
   componentDidMount() {
     if(!this.props.user) {
-      history.push('/dashboard');
+      history.push('/login');
     }
   }
 
   static getDerivedStateFromProps(nextProps, prevState) {
-    const { match } = nextProps
+    const { match } = nextProps;
     if(match !== prevState.match) {
       let ContentComponent = prevState.component;
       const path = match.path;
