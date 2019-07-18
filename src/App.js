@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Provider } from 'react-redux'
+import { Provider } from 'react-redux';
 import { createStore, applyMiddleware, compose } from 'redux';
 import { Route, Switch, Router, Redirect } from 'react-router-dom';
 import ReduxThunk from 'redux-thunk';
