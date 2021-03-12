@@ -13,7 +13,7 @@
     "leaflet": "^1.4.0",
     "moment": "^2.23.0",
     "react": "^16.7.0",
-    "react-dev-utils": "^7.0.1",
+    "react-dev-utils": "^11.0.4",
     "react-dom": "^16.7.0",
     "react-redux": "^6.0.0",
     "react-router": "^4.3.1",
